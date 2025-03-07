@@ -13,10 +13,11 @@ _start:
 	lw   x2, 0(x2) // number of elements in the array
 	addi x9, x2, -1
 	addi x8, x0, 0
+    addi x11, x1, 0
     for1:
         addi x3, x0, 0
         sub x10, x9, x8
-        la x1, array_start
+        la x1, x11
         for2:
             lw x4, 0(x1)
             lw x5 , 4(x1)
