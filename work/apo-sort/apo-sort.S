@@ -15,7 +15,7 @@ _start:
 	addi x8, x0, 0
     for1:
         addi x3, x0, 0
-	    sub x10, x9, x8
+        sub x10, x9, x8
         addi x1, x15, 0
         for2:
             lw x4, 0(x1)
@@ -28,9 +28,11 @@ _start:
             skip:
                 addi x1, x1, 4
                 addi x3, x3, 1
-                bne x3, x10, for2
+                slt x6, x3, x10
+                bne x6, x0, for2
          addi x8, x8, 1
-         bne x8, x2, for1
+         slt x6, x8, x2
+         bne x6, x0, for1
 
 //Final infinite loop
 end_loop:
