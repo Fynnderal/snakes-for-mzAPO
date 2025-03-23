@@ -28,9 +28,9 @@ _start:
             skip:
                 addi x1, x1, 4
                 addi x3, x3, 1
-                bge x3, x10, for2
+                blt x10, x3, for2
          addi x8, x8, 1
-         bge x2, x8, for1
+         blt x8, x2, for1
 
 //Final infinite loop
 end_loop:
