@@ -21,17 +21,15 @@ _start:
             lw x4, 0(x1)
             lw x5 , 4(x1)
             
-            blt x5, x4, skip
+            blt x4, x5, skip
                 sw x5, 0(x1)
                 sw x4, 4(x1)
             skip:
                 addi x1, x1, 4
                 addi x3, x3, 1
-                slt x6, x3, x10
-                bne x6, x0, for2
+                blt x3, x10, for2
          addi x8, x8, 1
-         slt x6, x8, x2
-         bne x6, x0, for1
+         blt x8, x2, for1
 
 //Final infinite loop
 end_loop:
@@ -44,7 +42,7 @@ end_loop:
 // .align    2 // not supported by qtrvsim yet
 
 array_start:
-.word	0x00000022
+.word	15, 1, 5, 6, 3 , 11, 0, 8
 .space 200
 array_size:
-.word 15
+.word 8
