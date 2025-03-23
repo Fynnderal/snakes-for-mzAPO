@@ -45,6 +45,6 @@ end_loop:
 
 array_start:
 .word	15, 0, 7, 5, 9, 2, 10
-//.space 200
+.space 200
 array_size:
 .word 7
