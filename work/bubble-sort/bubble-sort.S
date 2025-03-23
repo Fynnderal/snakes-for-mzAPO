@@ -8,7 +8,7 @@
 
 _start:
 
-	la   x1, array_start
+	la   x15, array_start
 	la   x2, array_size
 	lw   x2, 0(x2) // number of elements in the array
 	addi x9, x2, -1
@@ -16,7 +16,7 @@ _start:
     for1:
         addi x3, x0, 0
         sub x10, x9, x8
-        la x1, array_start
+        addi x1, x15, 0
         for2:
             lw x4, 0(x1)
             lw x5 , 4(x1)
@@ -44,8 +44,8 @@ end_loop:
 .data
 // .align    2 // not supported by qtrvsim yet
 
-array_size:
-.word	15
-.space 200
 array_start:
-.word	5, 3, 4, 1, 15, 8, 9, 2, 10, 6, 11, 1, 6, 9, 12
+.word	0x00000022, 0x00000055, 0x00000060 , 0x12345678, 0x12345676, 0x00000012, 0x00000008 , 0x000000ac, 0x33333333, 0x02000010, 0x00008382, 0x12375310, 0x00012340, 0x00020202, 0x00028288, 0x5, 0x6, 0x7, 0x8, 0x9, 0x10, 0x11, 0x12
+//.space 200
+array_size:
+.word 15
