@@ -21,7 +21,8 @@ _start:
             lw x4, 0(x1)
             lw x5 , 4(x1)
             
-            bge x5, x4, skip
+            slt x6, x5, x4
+            beq x6, x0, skip
                 sw x5, 0(x1)
                 sw x4, 4(x1)
             skip:
@@ -44,7 +45,7 @@ end_loop:
 // .align    2 // not supported by qtrvsim yet
 
 array_start:
-.word	15, 0, 7, 5, 9, 2, 10
+.word	0x00000022
 .space 200
 array_size:
-.word 7
+.word 15
