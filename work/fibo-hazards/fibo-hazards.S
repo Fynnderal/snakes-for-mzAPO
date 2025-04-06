@@ -19,7 +19,7 @@ addi a0, a0, %lo(fibo_series)
 addi x4, x0, 2
 lw a1, 0(a1)
 sw x2, 4(a0)
-addi a0, a0, 4
+addi a0, a0, 8
 
 Loop:
 add x3, x2, x1
