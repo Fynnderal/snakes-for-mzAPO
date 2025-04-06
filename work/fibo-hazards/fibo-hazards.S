@@ -8,14 +8,12 @@
 
 _start:
 
-//lui a1, %hi(fibo_limit)
-//lui a0,  %hi(fibo_series)
-addi a1, x0, 0x400
-addi a0, x0, 0x404
+lui a1, %hi(fibo_limit)
+lui a0,  %hi(fibo_series)
 
 addi x1, x0, 0
-//addi a1, a1, %lo(fibo_limit)
-//addi a0, a0, %lo(fibo_series)
+addi a1, a1, %lo(fibo_limit)
+addi a0, a0, %lo(fibo_series)
 
 addi x2, x0, 1
 addi x4, x0, 2
@@ -33,7 +31,7 @@ add x3, x2, x1
 add x1, x0, x2
 addi a0, a0, 4
 add x2, x3, x0
-bge x4, a1, end_loop
+blt a1, x4, end_loop
 addi x4, x4, 1
 sw x2, 0(a0)
 j Loop
@@ -48,7 +46,6 @@ end_loop:
 	nop
 
 .data
-.org 0x400
 // .align    2 // not supported by QtRVSim yet
 fibo_limit:
 	.word 42
