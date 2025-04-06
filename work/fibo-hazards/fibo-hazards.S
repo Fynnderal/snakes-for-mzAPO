@@ -24,12 +24,11 @@ addi a0, a0, 4
 Loop:
 add x3, x2, x1
 add x1, x0, x2
-addi a0, a0, 4
-add x2, x3, x0
-blt a1, x4, end_loop
 addi x4, x4, 1
-sw x2, 0(a0)
-j Loop
+sw x3, 0(a0)
+add x2, x3, x0
+addi a0, a0, 4
+ble x4, a1, Loop
 
 
 
