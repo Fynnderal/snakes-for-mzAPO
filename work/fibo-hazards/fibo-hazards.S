@@ -8,15 +8,19 @@
 
 _start:
 
-addi a1, x0, 0x300
-addi a0, x0, 0x304
+auipc a1, %pcrel_hi(fibo_limit)
+auipc a0, %pcrel_hi(fibo_series)
 
 addi x1, x0, 1
+addi a1, a1, %pcrel_lo(fibo_limit) + 8
+addi a0, a0, %pcrel_lo(fibo_series) +8 
+
 
 addi x2, x0, 1
+
+lw a1, 0(a1)
 sw x1, 0(a0)
 addi x4, x0, 2
-lw a1, 0(a1)
 sw x2, 4(a0)
 addi a0, a0, 4
 //	la   a0, fibo_series // la is pseudoinstruction expanded
@@ -45,7 +49,6 @@ end_loop:
 
 .data
 // .align    2 // not supported by QtRVSim yet
-.org 0x300
 fibo_limit:
 	.word 42
 fibo_series:
