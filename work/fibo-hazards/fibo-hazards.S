@@ -8,8 +8,8 @@
 
 _start:
 
-addi a0, x0, 0x300
-addi a1, x0, 0x304
+addi a1, x0, 0x300
+addi a0, x0, 0x304
 
 addi x1, x0, 1
 
