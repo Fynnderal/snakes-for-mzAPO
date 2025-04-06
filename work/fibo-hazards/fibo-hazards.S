@@ -13,7 +13,7 @@ lui a0,  %hi(fibo_series)
 
 addi x1, x0, 1
 addi a1, a1, %lo(fibo_limit)
-addi a0, a1, %lo(fibo_series)
+addi a0, a0, %lo(fibo_series)
 
 addi x2, x0, 1
 addi x1, x0, 1
