@@ -7,10 +7,13 @@
 .globl _start
 
 _start:
+la x10, fibo_series
+la x11, fibo_limit
+lw x10, 0(x10)
 //auipc a0, 0
 //auipc a1, 0
-addi x11, x0, 0x400
-addi x10, x0, 0x404
+//addi x11, x0, 0x400
+//addi x10, x0, 0x404
 addi x1, x0, 1
 //addi a0, a0, 96
 //addi a1, a1, 88
