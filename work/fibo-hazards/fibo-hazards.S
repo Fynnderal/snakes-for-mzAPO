@@ -19,9 +19,9 @@ addi x2, x0, 1
 addi x1, x0, 1
 
 lw a1, 0(a1)
-sw x1, 0(a0)
+sw x2, 0(a0)
 addi x4, x0, 2
-sw x2, 4(a0)
+sw x1, 4(a0)
 addi a0, a0, 4
 //	la   a0, fibo_series // la is pseudoinstruction expanded
 //	la   a1, fibo_limit  // into two instructions with dependency
