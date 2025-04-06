@@ -9,35 +9,31 @@
 _start:
 la x10, fibo_series
 la x11, fibo_limit
-//auipc a0, 0
-//auipc a1, 0
-//addi x11, x0, 0x400
-//addi x10, x0, 0x404
-addi x1, x0, 1
-//addi a0, a0, 96
-//addi a1, a1, 88
-addi x2, x0, 1
-sw x1, 0(x10)
-addi x4, x0, 2
 lw x11, 0(x11)
-sw x2, 4(x10)
-addi x10, x10, 4
-//	la   a0, fibo_series // la is pseudoinstruction expanded
-//	la   a1, fibo_limit  // into two instructions with dependency
-	                     // look for replacements in seminaries
-//	lw   a1, 0(a1) // number of elements in the array
 
+addi x5, x0, 0
+
+beq x11, x0, no_elements
+
+addi x1, x0, 0
+addi x2, x0, 1
+addi x3, x0, 1
 Loop:
 add x3, x2, x1
-add x1, x0, x2
+sw x3, 0(x10)
+addi x1, x2, 0
+addi x2, x3, 0
 addi x10, x10, 4
-add x2, x3, x0
-bge x4, x11, end_loop
-addi x4, x4, 1
-sw x2, 0(x10)
+addi x5, x5, 1
+bge x5, x11, end_loop
 j Loop
 
 
+
+
+
+no_elements:
+sw x0, 0(x10)
 
 //Final infinite loop
 end_loop:
