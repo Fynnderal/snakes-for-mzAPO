@@ -12,8 +12,8 @@ auipc a1, %pcrel_hi(fibo_limit)
 auipc a0, %pcrel_hi(fibo_series)
 
 addi x1, x0, 1
-addi a1, a1, %pcrel_lo(fibo_limit) + 16
-addi a0, a0, %pcrel_lo(fibo_series) +16
+addi a1, a1, %pcrel_lo(fibo_limit) + 12
+addi a0, a0, %pcrel_lo(fibo_series) +12
 
 
 addi x2, x0, 1
