@@ -49,7 +49,6 @@ end_loop:
 
 .data
 // .align    2 // not supported by QtRVSim yet
-.org 0x400
 fibo_limit:
 	.word 15
 fibo_series:
