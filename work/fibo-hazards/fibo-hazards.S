@@ -11,16 +11,14 @@ _start:
 lui a1, %hi(fibo_limit)
 lui a0,  %hi(fibo_series)
 
-addi x1, x0, 1
+addi x1, x0, 0
 addi a1, a1, %lo(fibo_limit)
 addi a0, a0, %lo(fibo_series)
 
 addi x2, x0, 1
-addi x1, x0, 1
-
+addi x4, x0, 2
 lw a1, 0(a1)
 sw x2, 0(a0)
-addi x4, x0, 2
 sw x1, 4(a0)
 addi a0, a0, 4
 //	la   a0, fibo_series // la is pseudoinstruction expanded
