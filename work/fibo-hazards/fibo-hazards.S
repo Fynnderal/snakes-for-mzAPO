@@ -9,7 +9,6 @@
 _start:
 la x10, fibo_series
 la x11, fibo_limit
-lw x10, 0(x10)
 //auipc a0, 0
 //auipc a1, 0
 //addi x11, x0, 0x400
