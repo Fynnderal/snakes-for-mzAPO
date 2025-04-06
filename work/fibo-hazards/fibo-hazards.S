@@ -8,13 +8,12 @@
 
 _start:
 
-auipc a1, %pcrel_hi(fibo_limit)
-auipc a0, %pcrel_hi(fibo_series)
+lui a1, %hi(fibo_limit)
+lui a0,  %hi(fibo_series)
 
 addi x1, x0, 1
-addi a1, a1, %pcrel_lo(fibo_limit) + 8
-addi a0, a0, %pcrel_lo(fibo_series) +8 
-
+addi a1, a1, %lo(fibo_limit)
+addi a0, a1, %lo(fibo_series)
 
 addi x2, x0, 1
 addi x1, x0, 1
