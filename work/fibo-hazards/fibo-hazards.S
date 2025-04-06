@@ -12,7 +12,7 @@ auipc a0, 0
 auipc a1, 0
 addi x1, x0, 1
 addi a0, a0, 96
-addi a1, a1, 84
+addi a1, a1, 88
 addi x2, x0, 1
 sw x1, 0(a0)
 addi x4, x0, 2
