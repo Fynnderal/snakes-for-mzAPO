@@ -97,6 +97,6 @@ end_loop:
 input_val:
 	.word 0x12345678
 characters:
-      .asciz "0123456789ABCDEF"
+      .asciz "0123456789abcdef"
 // Specify location to show in memory window
 #pragma qtrvsim focus memory input_val
