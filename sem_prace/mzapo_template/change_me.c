@@ -5,18 +5,55 @@
 #include <stdint.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "mzapo_parlcd.h"
 #include "mzapo_phys.h"
 #include "mzapo_regs.h"
 
+unsigned short* fb;
+
+enum {
+  UP = 0,
+  RIGHT,
+  LEFT,
+  DOWN,
+} typedef Directions;
+
+struct {
+  int currentX;
+  int currentY;
+} typedef section;
+
+struct {
+    Directions direction;
+    int currentX;
+    int currentY;
+    int sectionSize;
+    int sectionsNumber;
+    section* sections;
+} typedef snake;
+
+
+
+
+void draw_pixel(int x, int y, unsigned short color) {
+  if (x>=0 && x<480 && y>=0 && y<320) {
+    fb[x+480*y] = color;
+  }
+}
+
+
 int main(int argc, char *argv[]) {
   unsigned char *mem_base;
   unsigned char *parlcd_mem_base;
   uint32_t val_line=5;
-  int i,j,k;
+  int ptr;
   unsigned int c;
-  
+  fb  = (unsigned short *)malloc(320*480*2);
+
+
+
   printf("Hello world\n");
 
   sleep(1);
@@ -32,12 +69,7 @@ int main(int argc, char *argv[]) {
     exit(1);
 
   struct timespec loop_delay = {.tv_sec = 0, .tv_nsec = 20 * 1000 * 1000};
-  for (i=0; i<30; i++) {
-     *(volatile uint32_t*)(mem_base + SPILED_REG_LED_LINE_o) = val_line;
-     val_line<<=1;
-     printf("LED val 0x%x\n", val_line);
-     clock_nanosleep(CLOCK_MONOTONIC, 0, &loop_delay, NULL);
-  }
+  //clock_nanosleep(CLOCK_MONOTONIC, 0, &loop_delay, NULL);
   
   parlcd_mem_base = map_phys_address(PARLCD_REG_BASE_PHYS, PARLCD_REG_SIZE, 0);
 
@@ -46,45 +78,45 @@ int main(int argc, char *argv[]) {
 
   parlcd_hx8357_init(parlcd_mem_base);
 
-  parlcd_write_cmd(parlcd_mem_base, 0x2c);
-  for (i = 0; i < 320 ; i++) {
-    for (j = 0; j < 480 ; j++) {
-      c = 0;
-      parlcd_write_data(parlcd_mem_base, c);
-    }
+  section *sections = (section*) malloc(10 * sizeof(section));
+
+  snake red_snake = {RIGHT, 10, 100, 8, 10, sections};
+
+  for (int k = 0; k < red_snake.sectionsNumber; k++){
+    red_snake.sections[k].currentX = red_snake.currentX;
+    red_snake.sections[k].currentY = red_snake.currentY - k * red_snake.sectionSize;
   }
 
-  parlcd_write_cmd(parlcd_mem_base, 0x2c);
-  for (i = 0; i < 320 ; i++) {
-    for (j = 0; j < 480 ; j++) {
-      c = ((i & 0x1f) << 11) | (j & 0x1f);
-      parlcd_write_data(parlcd_mem_base, c);
-    }
-  }
 
-  loop_delay.tv_sec = 0;
-  loop_delay.tv_nsec = 200 * 1000 * 1000;
-  uint32_t otoc = 0;
-
-  while (((otoc>>24) & 7) == 0) {
-    for (k=0; k<60; k++) {
-      otoc = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
-      int red = ((otoc >> 16) & 0xff) / 4;
-      int blue = ((otoc & 0xff)) / 4;
-      
-      parlcd_write_cmd(parlcd_mem_base, 0x2c);
-      for (i = 0; i < 320 ; i++) {
-        for (j = 0; j < 480 ; j++) {
-          c = (((i + red) & 0x1f) << 11) | ((j+ blue) & 0x1f);
-          parlcd_write_data(parlcd_mem_base, c);
-        }
+  for (int k = 0; k < red_snake.sectionsNumber; k++){
+    section currentSection = red_snake.sections[k];
+    for (int i = 0; i < red_snake.sectionSize; i++){
+      for (int j = 0; j < red_snake.sectionSize; j++){
+        draw_pixel(currentSection.currentX  + j, currentSection.currentY + i, 0xf800);
       }
-
-      clock_nanosleep(CLOCK_MONOTONIC, 0, &loop_delay, NULL);
     }
   }
+
+  parlcd_write_cmd(parlcd_mem_base, 0x2c);
+  for (ptr = 0; ptr < 480*320 ; ptr++) {
+      parlcd_write_data(parlcd_mem_base, fb[ptr]);
+  }
+
+  while (true){
+    move_snake(&red_snake);
+  }
+
 
   printf("Goodbye world\n");
 
   return 0;
 }
+
+
+void move_snake(snake* player_snake){
+  switch(player_snake->direction) {
+    case RIGHT:
+      printf("Got it\n");
+      break; 
+  }
+} 
