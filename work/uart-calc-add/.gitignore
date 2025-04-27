@@ -1,0 +1,6 @@
+*.o
+depend
+uart-calc-add
+serial_port.in
+serial_port.ref
+serial_port.out
