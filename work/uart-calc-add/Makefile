@@ -79,8 +79,8 @@ clean:
 
 #riscv64-unknown-elf-objdump --source uart-calc-add
 
-input_val1:=$(shell echo $$RANDOM)
-input_val2:=$(shell echo $$RANDOM)
+input_val1:=3
+input_val2:=34
 
 run_test: $(TARGET_EXE)
 	echo $(input_val1) >serial_port.in
