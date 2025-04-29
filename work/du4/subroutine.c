@@ -2,12 +2,18 @@
 
 #include "subroutine.h"
 
-/* fill return type */ subroutine_fnc(/* fill in parameters */)
+extern int data;
+
+int subroutine_fnc(char a4)
 {
 
-  /*
-   * fill code with equivalent function to
-   *the analyzed program subroutine_fnc
-   */
+  if (122 < a4){
+    return a4;
+  }
 
+  if (96 < a4){
+    data += 1;
+    return a4 -32;
+  }
+  return a4;
 }
