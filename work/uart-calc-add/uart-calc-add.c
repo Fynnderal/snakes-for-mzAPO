@@ -139,23 +139,18 @@ int main(int argc, char *argv[])
     }
   }
 
-
-  unsigned char output[12];
-
-  output[0] = '\n';
-  counter = 1;
-  while (result != 0){
-    output[counter] = result % 10 + 48;
-    result = result / 10;
-    counter++;
-  }
-
-  
-
-  while (counter > 0){
+  while (1){
     if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
-      counter--; 
-      mem[write_data_o] = output[counter];
+      mem[write_data_o] = '\n';
+      break;
+  }
+}
+
+
+  while (result > 0){
+    if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
+      mem[write_data_o] = result % 10 + 48;
+      result /= 10;
     }
   }
 
