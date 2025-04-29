@@ -170,13 +170,9 @@ int main(int argc, char *argv[])
       c /= 10;
     }
   }
-
-  while(1){
-    if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
+  if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
       mem[write_data_o] = '\n';
-      break;
   }
-}
 
   return 0;
 }
