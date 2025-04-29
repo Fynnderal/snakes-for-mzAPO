@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
   unsigned int first_number = 0;
   unsigned char data[12] = {'\0'};
 
+  int number_of_digits;
   int idx = 0;
   while (counter < 2){
     if (mem[read_status_o] == SERP_RX_ST_REG_READY_m){
@@ -125,6 +126,9 @@ int main(int argc, char *argv[])
       data[idx] = mem[read_data_o];
 
       if (data[idx] == 10){
+        if (idx >= number_of_digits)
+          number_of_digits = idx + 1;
+
         int c = 1 ;
         for (int i = idx - 1; i >= 0; i--){
           first_number += (data[i] - 48) * c;
@@ -140,22 +144,35 @@ int main(int argc, char *argv[])
   }
 
 
-  unsigned char output[12];
-
-  output[0] = '\n';
-  counter = 1;
-  while (result != 0){
-    output[counter] = result % 10 + 48;
-    result = result / 10;
-    counter++;
-  }
-
-  
-
-  while (counter > 0){
+  while(1){
     if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
-      counter--; 
-      mem[write_data_o] = output[counter];
+      mem[write_data_o] = '\n';
+      break;
+  }
+}
+
+  int c = 1;
+  for (int i = 0; i < number_of_digits - 1; i++){
+    c *= 10;
+  }
+  
+  int temp = result / c;
+  if (temp != 0) {
+    while (1){
+      if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
+        mem[write_data_o] = temp + 48;
+        break;
+      }
+    }
+    result %= c;
+  }
+ 
+  c /= 10;
+  while (c > 0){  
+    if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
+      mem[write_data_o] = result / c + 48;
+      result %= c;
+      c /= 10;
     }
   }
 
