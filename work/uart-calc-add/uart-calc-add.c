@@ -111,7 +111,8 @@ int main(int argc, char *argv[])
   int* mem = (int*)(SERIAL_PORT_BASE);
   int read_status_o = SERP_RX_ST_REG_o / 4;
   int read_data_o = SERP_RX_DATA_REG_o / 4;
-  int write)statuus_o = SERP_TX_ST_REG_o / 4;
+  int write_statuus_o = SERP_TX_ST_REG_o / 4;
+  int write_data_o = SERP_TX_DATA_REG_o / 4;
 
   int result = 0, counter = 0;
   unsigned int first_number = 0;
@@ -152,9 +153,9 @@ int main(int argc, char *argv[])
   
 
   while (counter > 0){
-    if (mem[SERP_TX_ST_REG_o / 4] == SERP_TX_ST_REG_READY_m){
+    if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
       counter--; 
-      mem[SERP_TX_DATA_REG_o / 4] = output[counter];
+      mem[write_data_o] = output[counter];
     }
   }
 
