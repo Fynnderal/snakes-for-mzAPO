@@ -139,12 +139,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  while (1){
-    if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
-      mem[write_data_o] = '\n';
-      break;
-  }
-}
+
 
 
   while (result > 0){
@@ -153,7 +148,12 @@ int main(int argc, char *argv[])
       result /= 10;
     }
   }
-
+  while (1){
+    if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
+      mem[write_data_o] = '\n';
+      break;
+  }
+}
 
   return 0;
 }
