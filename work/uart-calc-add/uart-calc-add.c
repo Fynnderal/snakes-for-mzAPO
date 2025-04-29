@@ -144,12 +144,7 @@ int main(int argc, char *argv[])
   }
 
 
-  while(1){
-    if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
-      mem[write_data_o] = '\n';
-      break;
-  }
-}
+
 
   int c = 1;
   for (int i = 0; i < number_of_digits - 1; i++){
@@ -176,6 +171,12 @@ int main(int argc, char *argv[])
     }
   }
 
+  while(1){
+    if (mem[write_statuus_o] == SERP_TX_ST_REG_READY_m){
+      mem[write_data_o] = '\n';
+      break;
+  }
+}
 
   return 0;
 }
