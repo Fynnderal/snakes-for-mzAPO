@@ -26,12 +26,13 @@ struct {
 } typedef section;
 
 struct {
-    Directions direction;
     int currentX;
     int currentY;
     int sectionSize;
     int sectionsNumber;
+    int speed;
     section* sections;
+    Directions* directions;
 } typedef snake;
 
 
@@ -43,12 +44,16 @@ void draw_pixel(int x, int y, unsigned short color) {
   }
 }
 
+void draw_snake(snake* player_snake, unsigned char* parlcd_mem_base);
+
+void move_snake(snake* player_snake);
+
+void snake_init(snake* player_snake, unsigned char* parlcd_mem_base);
 
 int main(int argc, char *argv[]) {
   unsigned char *mem_base;
   unsigned char *parlcd_mem_base;
   uint32_t val_line=5;
-  int ptr;
   unsigned int c;
   fb  = (unsigned short *)malloc(320*480*2);
 
@@ -78,32 +83,32 @@ int main(int argc, char *argv[]) {
 
   parlcd_hx8357_init(parlcd_mem_base);
 
+  //initialization of the snake
   section *sections = (section*) malloc(10 * sizeof(section));
+  Directions * directions  = (Directions* ) malloc (16 * sizeof(Directions));
 
-  snake red_snake = {RIGHT, 10, 100, 8, 10, sections};
-
-  for (int k = 0; k < red_snake.sectionsNumber; k++){
-    red_snake.sections[k].currentX = red_snake.currentX;
-    red_snake.sections[k].currentY = red_snake.currentY - k * red_snake.sectionSize;
+  if (!sections || !directions){
+    exit(-1);
   }
 
-
-  for (int k = 0; k < red_snake.sectionsNumber; k++){
-    section currentSection = red_snake.sections[k];
-    for (int i = 0; i < red_snake.sectionSize; i++){
-      for (int j = 0; j < red_snake.sectionSize; j++){
-        draw_pixel(currentSection.currentX  + j, currentSection.currentY + i, 0xf800);
-      }
-    }
+  for (int i = 0; i < 16; i++){
+    directions[i] = DOWN;
   }
 
-  parlcd_write_cmd(parlcd_mem_base, 0x2c);
-  for (ptr = 0; ptr < 480*320 ; ptr++) {
-      parlcd_write_data(parlcd_mem_base, fb[ptr]);
-  }
+  snake red_snake = {10, 100, 8, 10, 5, sections, directions};
+  
+
+
 
   while (true){
+    clean_screen()
     move_snake(&red_snake);
+    for (int i = 1; i < 16; i++){
+      red_snake.directions[i] = red_snake.directions[i - 1];
+    }
+
+    draw_snake(&red_snake, parlcd_mem_base);
+    sleep(0.5);
   }
 
 
@@ -113,10 +118,66 @@ int main(int argc, char *argv[]) {
 }
 
 
+void snake_init(snake* player_snake, unsigned char* parlcd_mem_base){
+    for (int k = 0; k < player_snake->sectionsNumber; k++){
+    player_snake->sections[k].currentX = player_snake->currentX;
+    player_snake->sections[k].currentY = player_snake->currentY - k * player_snake->sectionSize;
+  }
+
+
+  for (int k = 0; k < player_snake->sectionsNumber; k++){
+    section currentSection = player_snake->sections[k];
+    for (int i = 0; i < player_snake->sectionSize; i++){
+      for (int j = 0; j < player_snake->sectionSize; j++){
+        draw_pixel(currentSection.currentX  + j, currentSection.currentY + i, 0xf800);
+      }
+    }
+  }
+
+  parlcd_write_cmd(parlcd_mem_base, 0x2c);
+  for (int ptr = 0; ptr < 480*320 ; ptr++) {
+      parlcd_write_data(parlcd_mem_base, fb[ptr]);
+  }
+
+}
+
+void draw_on_screen(){
+  parlcd_write_cmd(parlcd_mem_base, 0x2c);
+  for (int ptr = 0; ptr < 480*320 ; ptr++) {
+      parlcd_write_data(parlcd_mem_base, fb[ptr]);
+  }
+}
+
+void clean_screen(){
+  for (int i = 0; i < 320; i++){
+    for (int j = 0; j < 480; j++){
+      draw_pixel(j, i, 0x0);
+    }
+  }
+}
+
+void draw_snake(snake* player_snake, unsigned char* parlcd_mem_base){
+  for (int k = 0; k < player_snake->sectionsNumber; k++){
+    section currentSection = player_snake->sections[k];
+    for (int i = 0; i < player_snake->sectionSize; i++){
+      for (int j = 0; j < player_snake->sectionSize; j++){
+        draw_pixel(currentSection.currentX  + j, currentSection.currentY + i, 0xf800);
+      }
+    }
+  }
+}
+
 void move_snake(snake* player_snake){
-  switch(player_snake->direction) {
-    case RIGHT:
-      printf("Got it\n");
-      break; 
+  for (int i = 0; i < player_snake->sectionsNumber; i++) {
+
+    switch(player_snake->directions[i]) {
+      case RIGHT:
+        printf("Got it\n");
+        break; 
+
+      case DOWN:
+        player_snake->sections[i].currentY += player_snake->speed;
+        break;
+    }
   }
 } 
