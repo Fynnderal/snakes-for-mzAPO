@@ -16,6 +16,9 @@ unsigned short* fb;
 volatile uint32_t otoc;
 unsigned char *mem_base;
 
+#define AppleSize 6
+#define DEFALT_SNAKE_SIZE 10
+
 enum {
   DOWN = 0,
   RIGHT,
@@ -41,11 +44,9 @@ struct {
     int sectionSize;
     int sectionsNumber;
     States currentState;
-    int speed;
     section* sections;
     Directions* directions;
 } typedef snake;
-
 
 
 
@@ -61,15 +62,27 @@ void move_snake(snake* player_snake);
 
 void snake_init(snake* player_snake, unsigned char* parlcd_mem_base, int color);
 
-void draw_on_screen();
+void drawScreen(unsigned char* parlcd_mem_base);
 
 void clean_screen();
 
-bool checkConrools(int cotrolID, snake* player_snake, long long now, long long previous_update);
+bool checkConrools(int cotrolID, snake* player_snake, long long now, long long previous_update, long long intervalBetweenChecks);
 
 bool check_collisions(snake* snake_to_check, snake* snake_on_the_map); 
 
 void updateLED(int led_id, States state);
+
+section* spawn_apple(snake* snake1, snake* snake2, section* apple);
+
+section* create_apple(snake* snake1, snake* snake2, section* apple);
+
+void createSnakeSection(snake* playerSnake);
+
+bool eatApple(snake* playerSnake, section* currentApple, bool left);
+
+void drawObject(int X, int Y, int Width, int Height, int color);
+
+void updateLEDLine(snake* snakeToUpdate, bool left);
 
 int main(int argc, char *argv[]) {
   unsigned char *parlcd_mem_base;
@@ -126,8 +139,8 @@ int main(int argc, char *argv[]) {
     directionsBLUE[i] = DOWN;
   }
 
-  snake red_snake = {10, 100, 8, 10, OK, 2, sectionsRED, directionsRED};
-  snake blue_snake = {400, 100, 8, 10, OK, 2, sectionsBLUE, directionsBLUE};
+  snake red_snake = {10, 100, 8, DEFALT_SNAKE_SIZE, OK, sectionsRED, directionsRED};
+  snake blue_snake = {400, 100, 8, DEFALT_SNAKE_SIZE, OK, sectionsBLUE, directionsBLUE};
   
 
 
@@ -137,14 +150,17 @@ int main(int argc, char *argv[]) {
   struct timespec ts;
 
 
+  int speed = 3;
   long long now;
   long long previousUpdateTime = 0;
-  long long timeBetweenUpdates = 1000;
+  long long timeBetweenUpdates = 1000 / speed;
 
   long long previousRedCheckControls = 0;
   long long previousBlueCheckControls = 0;
 
-  long long invincibleInterval = 5000;
+  long long invincibleInterval = 5000 / speed;
+
+  long long intervalBetweenChecks = 400 / speed;
 
   long long redGotDamage = 0;
   long long blueGotDamage = 0;
@@ -152,8 +168,11 @@ int main(int argc, char *argv[]) {
   bool isRedInvincible = false;
   bool isBlueInvincible = false;
 
-  int previousDelta = 0;
-  
+  section* currentApple = NULL;
+
+
+  *(volatile uint32_t*)(mem_base + SPILED_REG_LED_LINE_o) = 0;
+  srand (time(NULL));
   while (true){
     clock_gettime(CLOCK_REALTIME, &ts);
 
@@ -170,14 +189,19 @@ int main(int argc, char *argv[]) {
       isBlueInvincible = false;
     }
 
-    if (checkConrools(0, &red_snake, now, previousRedCheckControls)) 
+    if (checkConrools(0, &red_snake, now, previousRedCheckControls, intervalBetweenChecks)) 
       previousRedCheckControls = now;
 
-    if (checkConrools(2, &blue_snake, now, previousBlueCheckControls))
+    if (checkConrools(2, &blue_snake, now, previousBlueCheckControls, intervalBetweenChecks))
       previousBlueCheckControls = now;
 
     if (now - previousUpdateTime >= timeBetweenUpdates){
       clean_screen();
+      if (!currentApple){
+        currentApple = spawn_apple(&red_snake, &blue_snake, currentApple); 
+      } else {
+        drawObject(currentApple->currentX, currentApple->currentY, AppleSize, AppleSize, 0xf800);
+      }
       move_snake(&red_snake);
       move_snake(&blue_snake);
 
@@ -206,11 +230,81 @@ int main(int argc, char *argv[]) {
           blue_snake.currentState++;
         }
       }
+
+      if (currentApple != NULL && eatApple(&red_snake, currentApple, true))
+        currentApple = NULL;
+      
+      if (currentApple != NULL && eatApple(&blue_snake, currentApple, false))
+        currentApple = NULL;
+      
+      drawScreen(parlcd_mem_base);
     }
   }
   printf("Goodbye world\n");
   
   return 0;
+}
+
+void createSnakeSection(snake* playerSnake){
+        playerSnake->sectionsNumber++;
+        playerSnake->sections = (section*)realloc(playerSnake->sections, playerSnake->sectionsNumber * sizeof(section));
+        if (!playerSnake->sections){
+          exit(-1);
+        }
+        section lastSection = playerSnake->sections[playerSnake->sectionsNumber - 2];
+        Directions lastSectionDirection = playerSnake->directions[playerSnake->sectionsNumber - 2];
+        playerSnake->directions[playerSnake->sectionsNumber - 1] = lastSectionDirection;
+        switch(lastSectionDirection){
+          case UP:
+            playerSnake->sections[playerSnake->sectionsNumber - 1].currentX = lastSection.currentX;
+            playerSnake->sections[playerSnake->sectionsNumber - 1].currentY = lastSection.currentY + playerSnake->sectionSize;
+            break;
+
+          case DOWN:
+            playerSnake->sections[playerSnake->sectionsNumber - 1].currentX = lastSection.currentX;
+            playerSnake->sections[playerSnake->sectionsNumber - 1].currentY = lastSection.currentY - playerSnake->sectionSize;
+            break;
+
+          case RIGHT:
+            playerSnake->sections[playerSnake->sectionsNumber - 1].currentX = lastSection.currentX - playerSnake->sectionSize;
+            playerSnake->sections[playerSnake->sectionsNumber - 1].currentY = lastSection.currentY;
+            break;
+
+          case LEFT:
+            playerSnake->sections[playerSnake->sectionsNumber - 1].currentX = lastSection.currentX + playerSnake->sectionSize;
+            playerSnake->sections[playerSnake->sectionsNumber - 1].currentY = lastSection.currentY;
+            break;
+          case NONE:
+            fprintf(stderr, "No direction\n");
+        }
+}
+
+bool eatApple(snake* playerSnake, section* currentApple, bool left){
+   section head = playerSnake->sections[0];
+
+    if (head.currentX + playerSnake->sectionSize > currentApple->currentX &&
+        head.currentX < currentApple->currentX + AppleSize &&
+        head.currentY + playerSnake->sectionSize > currentApple->currentY &&
+        head.currentY < currentApple->currentY + AppleSize
+      ){
+        createSnakeSection(playerSnake);
+        updateLEDLine(playerSnake, left);
+        return true;
+      }
+
+    return false;
+}
+
+void updateLEDLine(snake* snakeToUpdate, bool left){
+  volatile uint32_t previousValue = *(volatile uint32_t*)(mem_base + SPILED_REG_LED_LINE_o);
+
+  if (!left){
+  int temp = 1 << (snakeToUpdate->sectionsNumber - DEFALT_SNAKE_SIZE - 1);
+  *(volatile uint32_t*)(mem_base + SPILED_REG_LED_LINE_o) = previousValue | temp; 
+  }else{
+    int temp = 1 << (31 - snakeToUpdate->sectionsNumber + DEFALT_SNAKE_SIZE + 1);
+    *(volatile uint32_t*)(mem_base + SPILED_REG_LED_LINE_o) = previousValue | temp;
+  }
 }
 
 void updateLED(int led_id, States state){
@@ -249,10 +343,9 @@ void snake_init(snake* player_snake, unsigned char* parlcd_mem_base, int color){
     }
   }
 
-  draw_on_screen(parlcd_mem_base);
 }
 
-void draw_on_screen(unsigned char* parlcd_mem_base){
+void drawScreen(unsigned char* parlcd_mem_base){
   parlcd_write_cmd(parlcd_mem_base, 0x2c);
   for (int ptr = 0; ptr < 480*320 ; ptr++) {
       parlcd_write_data(parlcd_mem_base, fb[ptr]);
@@ -270,19 +363,12 @@ void clean_screen(){
 void draw_snake(snake* player_snake, unsigned char* parlcd_mem_base, int color){
   for (int k = 0; k < player_snake->sectionsNumber; k++){
     section currentSection = player_snake->sections[k];
-    for (int i = 0; i < player_snake->sectionSize; i++){
-      for (int j = 0; j < player_snake->sectionSize; j++){
-        draw_pixel(currentSection.currentX  + j, currentSection.currentY + i, color);
-      }
-    }
+    drawObject(currentSection.currentX, currentSection.currentY, player_snake->sectionSize, player_snake->sectionSize, color);
   }
-
-  draw_on_screen(parlcd_mem_base);
 }
 
 void move_snake(snake* player_snake){
   for (int i = 0; i < player_snake->sectionsNumber; i++) {
-    for (int i = 0; i < player_snake->speed; i++){
       switch(player_snake->directions[i]) {
 
         case RIGHT:
@@ -305,7 +391,6 @@ void move_snake(snake* player_snake){
           printf("No directions for %d\n", i);
           break;
       }
-    } 
   }
 
   for (int i = 15; i > 0; i--){
@@ -314,7 +399,7 @@ void move_snake(snake* player_snake){
 
 }
 
-bool checkConrools(int controlID, snake* player_snake, long long now, long long previous_update){
+bool checkConrools(int controlID, snake* player_snake, long long now, long long previous_update, long long intervalBetweenChecks){
   int delta = 0;
   volatile uint32_t novy_otoc = otoc;
 
@@ -338,7 +423,7 @@ bool checkConrools(int controlID, snake* player_snake, long long now, long long 
   
   otoc = novy_otoc;
 
-  if (now - previous_update >= 400){
+  if (now - previous_update >= intervalBetweenChecks){
       if (delta == 0)
           return false;
 
@@ -377,6 +462,50 @@ bool check_collisions(snake* snake_to_check, snake* snake_on_the_map){
     return false;
 }
 
-bool spawn_apple(){
+section* create_apple(snake* snake1, snake* snake2, section* apple){
+  int randomX = rand() % 480;
+  int randomY = rand() % 320;
+  for (int i = 0; i < snake1->sectionsNumber; i++){
+    if (randomX + AppleSize >= snake1->sections[i].currentX &&
+        randomX <= snake1->sections[i].currentX + snake1->sectionSize &&
+        randomY + AppleSize >= snake1 -> sections[i].currentY &&
+        randomY <= snake1 ->sections[i].currentY + snake1->sectionSize
+        ){
+          return NULL;
+        }
+  }
   
+  for (int i = 0; i < snake2->sectionsNumber; i++){
+    if (randomX + AppleSize >= snake2->sections[i].currentX &&
+        randomX <= snake2->sections[i].currentX + snake2->sectionSize &&
+        randomY + AppleSize >= snake2 -> sections[i].currentY &&
+        randomY <= snake2 ->sections[i].currentY + snake2->sectionSize
+        ){
+          return NULL;
+        }
+  }
+  apple = (section*) malloc(sizeof(section));
+  if (!apple)
+    exit(-1);
+
+  apple->currentX = randomX;
+  apple->currentY = randomY;
+  return apple;
+}
+
+section* spawn_apple(snake* snake1, snake* snake2, section* apple){
+  apple = create_apple(snake1, snake2, apple);
+  if (apple == NULL)
+    return NULL;
+
+  drawObject(apple->currentX, apple->currentY, AppleSize, AppleSize, 0xf800);
+  return apple;
+}
+
+void drawObject(int X, int Y, int Width, int Height, int color){
+  for (int i = 0; i < Width; i++){
+    for (int j = 0; j < Height; j++){
+      draw_pixel(X + i, Y + j, color);
+    }
+  }
 }
