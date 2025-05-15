@@ -11,13 +11,17 @@
 #include "mzapo_parlcd.h"
 #include "mzapo_phys.h"
 #include "mzapo_regs.h"
+#include "font_types.h"
 
 unsigned short* fb;
 volatile uint32_t otoc;
 unsigned char *mem_base;
+unsigned char speed = 3;
+font_descriptor_t *fdes;
 
 #define AppleSize 6
 #define DEFALT_SNAKE_SIZE 10
+#define FONT_SIZE 3
 
 enum {
   DOWN = 0,
@@ -47,6 +51,9 @@ struct {
     section* sections;
     Directions* directions;
 } typedef snake;
+
+
+
 
 
 
@@ -84,13 +91,64 @@ void drawObject(int X, int Y, int Width, int Height, int color);
 
 void updateLEDLine(snake* snakeToUpdate, bool left);
 
+int get_delta(int otoc_id);
+
+int char_width(int ch) {
+  int width;
+  if (!fdes->width) {
+    width = fdes->maxwidth;
+  } else {
+    width = fdes->width[ch-fdes->firstchar];
+  }
+  return width;
+}
+
+void draw_pixel_big(int x, int y, int scale, unsigned short color) {
+  int i,j;
+  for (i=0; i<scale; i++) {
+    for (j=0; j<scale; j++) {
+      draw_pixel(x+i, y+j, color);
+    }
+  }
+}
+
+void draw_char(int x, int y, char ch, unsigned short color) {
+  int w = char_width(ch);
+  const font_bits_t *ptr;
+  if ((ch >= fdes->firstchar) && (ch-fdes->firstchar < fdes->size)) {
+    if (fdes->offset) {
+      ptr = &fdes->bits[fdes->offset[ch-fdes->firstchar]];
+    } else {
+      int bw = (fdes->maxwidth+15)/16;
+      ptr = &fdes->bits[(ch-fdes->firstchar)*bw*fdes->height];
+    }
+    int i, j;
+    for (i=0; i<fdes->height; i++) {
+      font_bits_t val = *ptr;
+      for (j=0; j<w; j++) {
+        if ((val&0x8000)!=0) {
+          draw_pixel_big(x+FONT_SIZE*j, y+FONT_SIZE*i, FONT_SIZE ,color);
+        }
+        val<<=1;
+      }
+      ptr++;
+    }
+  }
+}
+
+void drawText(int x, int y, char* text, int amount_of_symbols, int color);
+
+void draw_main_menu(int current_option);
+
+bool button_pressed(int otoc_id);
+
 int main(int argc, char *argv[]) {
   unsigned char *parlcd_mem_base;
   uint32_t val_line=5;
   unsigned int c;
   fb  = (unsigned short *)malloc(320*480*2);
 
-
+  fdes = &font_winFreeSystem14x16;
 
   printf("Hello world\n");  
 
@@ -150,7 +208,6 @@ int main(int argc, char *argv[]) {
   struct timespec ts;
 
 
-  int speed = 3;
   long long now;
   long long previousUpdateTime = 0;
   long long timeBetweenUpdates = 1000 / speed;
@@ -173,76 +230,206 @@ int main(int argc, char *argv[]) {
 
   *(volatile uint32_t*)(mem_base + SPILED_REG_LED_LINE_o) = 0;
   srand (time(NULL));
+
+  bool start = false;
+  bool in_main_menu = true;
+  bool in_options = false;
+  signed char current_option = 0;
+
+  //update
   while (true){
     clock_gettime(CLOCK_REALTIME, &ts);
 
     now = (long long) ts.tv_sec * 1000 + (long long)ts.tv_nsec / 1000000;
-    
-    updateLED(0, red_snake.currentState);
-    updateLED(1, blue_snake.currentState);
 
-    if (now - redGotDamage >= invincibleInterval){
-      isRedInvincible = false;
+
+
+    if (in_main_menu) {
+        clean_screen(); 
+        draw_main_menu(current_option);
+        drawScreen(parlcd_mem_base);
+
+        int delta = get_delta(1);
+        if (delta > 1)
+          current_option = (current_option + 1) % 3;
+        if (delta < -1){
+          current_option = (current_option - 1) % 3;
+          if (current_option < 0)
+            current_option = 2;
+        }
+
+        if (button_pressed(1)){
+          switch(current_option){
+            case 0:
+              in_main_menu = false;
+              start = true;
+              break;
+
+            case 1:
+              in_main_menu = false;
+              in_options = true;
+              break;
+
+            case 2:
+              clean_screen();
+              drawScreen(parlcd_mem_base);
+              exit(0);
+              break;
+          }
+          sleep(1);
+        }
     }
 
-    if (now - blueGotDamage >= invincibleInterval){
-      isBlueInvincible = false;
-    }
+    if (in_options){
+      char digits[] = "0123456789";
+      clean_screen(); 
+      int currentX = 160;
+      drawText(currentX, 85, "SPEED", 6, 0xffff);
 
-    if (checkConrools(0, &red_snake, now, previousRedCheckControls, intervalBetweenChecks)) 
-      previousRedCheckControls = now;
+      currentX += (char_width('S') + char_width('P') + char_width('E') + char_width('E') + char_width('D') + char_width('S'))* FONT_SIZE;
+      
 
-    if (checkConrools(2, &blue_snake, now, previousBlueCheckControls, intervalBetweenChecks))
-      previousBlueCheckControls = now;
+      int delta = get_delta(1);
+      speed += delta;
 
-    if (now - previousUpdateTime >= timeBetweenUpdates){
-      clean_screen();
-      if (!currentApple){
-        currentApple = spawn_apple(&red_snake, &blue_snake, currentApple); 
-      } else {
-        drawObject(currentApple->currentX, currentApple->currentY, AppleSize, AppleSize, 0xf800);
-      }
-      move_snake(&red_snake);
-      move_snake(&blue_snake);
+      int t = 100;
+      int temp = speed; 
+      int current_digit;
 
-      if (isRedInvincible)
-        draw_snake(&red_snake, parlcd_mem_base, 0x807f7c);
-      else
-        draw_snake(&red_snake, parlcd_mem_base, 0xf800);
-
-      if (isBlueInvincible)
-        draw_snake(&blue_snake, parlcd_mem_base, 0x807f7c);
-      else
-        draw_snake(&blue_snake, parlcd_mem_base, 0x1f);
-      previousUpdateTime = now;
-    
-      if (!isBlueInvincible && !isRedInvincible){
-        if (check_collisions(&red_snake, &blue_snake)){
-          printf("red got\n");
-          redGotDamage = now;
-          isRedInvincible = true;
-          red_snake.currentState++;
-        }
-        if (check_collisions(&blue_snake, &red_snake)){
-          printf("blue got\n");
-          blueGotDamage = now;
-          isBlueInvincible = true; 
-          blue_snake.currentState++;
-        }
+      for (int i = 0; i < 3; i++){
+        current_digit = temp / t;
+        temp %= t;
+        t /= 10;
+        if (current_digit == 0)
+          continue;
+        
+        drawText(currentX, 85, &digits[current_digit], 1, 0xff);
+        currentX += char_width(digits[current_digit]) * FONT_SIZE;
       }
 
-      if (currentApple != NULL && eatApple(&red_snake, currentApple, true))
-        currentApple = NULL;
-      
-      if (currentApple != NULL && eatApple(&blue_snake, currentApple, false))
-        currentApple = NULL;
-      
       drawScreen(parlcd_mem_base);
+      if (button_pressed(1)) {
+        in_options = false;
+        in_main_menu = true;
+        sleep(1);
+      }
+            
+    }
+
+    if (start){
+      updateLED(0, red_snake.currentState);
+      updateLED(1, blue_snake.currentState);
+
+      if (now - redGotDamage >= invincibleInterval){
+        isRedInvincible = false;
+      }
+
+      if (now - blueGotDamage >= invincibleInterval){
+        isBlueInvincible = false;
+      }
+
+      if (checkConrools(0, &red_snake, now, previousRedCheckControls, intervalBetweenChecks)) 
+        previousRedCheckControls = now;
+
+      if (checkConrools(2, &blue_snake, now, previousBlueCheckControls, intervalBetweenChecks))
+        previousBlueCheckControls = now;
+
+      if (now - previousUpdateTime >= timeBetweenUpdates){
+        clean_screen();
+        if (!currentApple) {
+          currentApple = spawn_apple(&red_snake, &blue_snake, currentApple); 
+        } else {
+          drawObject(currentApple->currentX, currentApple->currentY, AppleSize, AppleSize, 0xf800);
+        }
+        move_snake(&red_snake);
+        move_snake(&blue_snake);
+
+        if (isRedInvincible)
+          draw_snake(&red_snake, parlcd_mem_base, 0x807f7c);
+        else
+          draw_snake(&red_snake, parlcd_mem_base, 0xf800);
+
+        if (isBlueInvincible)
+          draw_snake(&blue_snake, parlcd_mem_base, 0x807f7c);
+        else
+          draw_snake(&blue_snake, parlcd_mem_base, 0x1f);
+        previousUpdateTime = now;
+      
+        if (!isBlueInvincible && !isRedInvincible){
+          if (check_collisions(&red_snake, &blue_snake)){
+            printf("red got\n");
+            redGotDamage = now;
+            isRedInvincible = true;
+            red_snake.currentState++;
+          }
+          if (check_collisions(&blue_snake, &red_snake)){
+            printf("blue got\n");
+            blueGotDamage = now;
+            isBlueInvincible = true; 
+            blue_snake.currentState++;
+          }
+        }
+
+        if (currentApple != NULL && eatApple(&red_snake, currentApple, true))
+          currentApple = NULL;
+        
+        if (currentApple != NULL && eatApple(&blue_snake, currentApple, false))
+          currentApple = NULL;
+        
+        drawScreen(parlcd_mem_base);
+      }
     }
   }
   printf("Goodbye world\n");
   
   return 0;
+}
+
+
+bool button_pressed(int otoc_id){  
+  volatile uint32_t novy_otoc = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
+
+  bool pressed = false;
+
+  if (otoc_id == 0){
+    pressed = (int) ((novy_otoc >> 26)&0x01) == 1;
+  }
+  else if (otoc_id == 1){
+    pressed = (int) ((novy_otoc >> 25)&0x01)  == 1;
+  }
+  else{
+    pressed = (int) ((novy_otoc >> 24) &0x01) == 1;
+  }
+
+  otoc = novy_otoc;
+  return pressed;
+}
+
+void draw_main_menu(int current_option){
+  drawText(160, 85, "START", 5, 0xffff);
+  drawText(160, 85 + fdes->height * FONT_SIZE + 10, "OPTIONS", 7, 0xffff);
+  drawText(160, 85 + 20 + fdes->height * 2 * FONT_SIZE, "EXIT", 4, 0xffff);
+  switch(current_option){
+    case 0:
+      drawText(160, 85, "START", 5, 0xbdf7);
+      break;
+
+    case 1:
+      drawText(160, 85 + fdes->height * FONT_SIZE + 10, "OPTIONS", 7, 0xbdf7);
+      break;
+
+    case 2:
+        drawText(160, 85 + 20 + fdes->height * 2 * FONT_SIZE, "EXIT", 4, 0xbdf7);
+        break;
+  }
+
+}
+
+void drawText(int x, int y, char* text, int amount_of_symbols, int color){
+  for (int i = 0; i < amount_of_symbols; i++){
+    draw_char(x, y, text[i], color);
+    x += char_width(text[i]) * FONT_SIZE;
+  }
 }
 
 void createSnakeSection(snake* playerSnake){
@@ -399,19 +586,20 @@ void move_snake(snake* player_snake){
 
 }
 
-bool checkConrools(int controlID, snake* player_snake, long long now, long long previous_update, long long intervalBetweenChecks){
+int get_delta(otoc_id){
   int delta = 0;
-  volatile uint32_t novy_otoc = otoc;
+  
+  volatile uint32_t novy_otoc = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
 
-  if (controlID == 0){
-    novy_otoc = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
+  if (otoc_id == 0){
     delta = (int) ((novy_otoc >> 16)&0xff) - (int)((otoc >> 16)&0xff);
   }
-  else if (controlID == 2){
-    novy_otoc = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
+  else if (otoc_id == 1){
+    delta = (int) ((novy_otoc >> 8)&0xff) - (int)((otoc >> 8)&0xff);
+  }
+  else{
     delta = (int) (novy_otoc &0xff) - (int)(otoc &0xff);
   }
-
 
   if (delta > 128){
     delta -= 256;
@@ -420,8 +608,16 @@ bool checkConrools(int controlID, snake* player_snake, long long now, long long 
   if (delta < -128){
     delta += 256;
   }
-  
+
+
   otoc = novy_otoc;
+
+  return delta;
+}
+
+bool checkConrools(int controlID, snake* player_snake, long long now, long long previous_update, long long intervalBetweenChecks){
+
+  int delta = get_delta(controlID);
 
   if (now - previous_update >= intervalBetweenChecks){
       if (delta == 0)
