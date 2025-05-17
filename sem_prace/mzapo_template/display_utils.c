@@ -1,12 +1,28 @@
+/*******************************************************************
+  Program provides utils for drawing images on the display to simple game "Snakes" for the MZ_APO board
+
+
+  (C) Copyright 2025 by Abdzhanov Aidar
+      e-mail:   abdzhaid@cvut.cz
+      github: https://gitlab.fel.cvut.cz/B242_B0B35APO/abdzhaid/-/tree/main/sem_prace?ref_type=heads
+      license:  any combination of GPL, LGPL, MPL or BSD licenses
+
+ *******************************************************************/
+
 #include "display_utils.h"
 
+// frame buffer
 unsigned short* fb;
+
+// font descriptor
 font_descriptor_t *fdes;
+
 
 void init_display_utils(){
   fb = (unsigned short *)malloc(320*480*2);
   fdes = &font_winFreeSystem14x16;
 }
+
 
 void draw_pixel(int x, int y, unsigned short color) {
   if (x>=0 && x<480 && y>=0 && y<320) {
@@ -47,6 +63,7 @@ void draw_char(int x, int y, char ch, unsigned short color) {
   }
 }
 
+
 int char_width(int ch) {
   int width;
   if (!fdes->width) {
@@ -56,6 +73,7 @@ int char_width(int ch) {
   }
   return width;
 }
+
 
 void draw_number(int x, int y, unsigned char number){
   char digits[] = "0123456789";
@@ -77,12 +95,14 @@ void draw_number(int x, int y, unsigned char number){
   draw_text(x, y, &digits_to_draw[11 - idx + 1], idx , 0xff);
 }
 
+
 void draw_text(int x, int y, char* text, int amount_of_symbols, int color){
   for (int i = 0; i < amount_of_symbols; i++){
     draw_char(x, y, text[i], color);
     x += char_width(text[i]) * FONT_SIZE;
   }
 }
+
 
 void draw_screen(unsigned char* parlcd_mem_base){
   parlcd_write_cmd(parlcd_mem_base, 0x2c);
@@ -91,6 +111,7 @@ void draw_screen(unsigned char* parlcd_mem_base){
   }
 }
 
+
 void clean_screen(){
   for (int i = 0; i < 320; i++){
     for (int j = 0; j < 480; j++){
@@ -98,6 +119,7 @@ void clean_screen(){
     }
   }
 }
+
 
 void draw_object(int x, int y, int width, int height, int color){
   for (int i = 0; i < width; i++){

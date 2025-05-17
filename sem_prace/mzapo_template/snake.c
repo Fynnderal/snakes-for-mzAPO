@@ -1,3 +1,15 @@
+/*******************************************************************
+  Program provides utils for controlling snake to the game "Snakes" for the MZ_APO board
+
+
+  (C) Copyright 2025 by Abdzhanov Aidar
+      e-mail:   abdzhaid@cvut.cz
+      github: https://gitlab.fel.cvut.cz/B242_B0B35APO/abdzhaid/-/tree/main/sem_prace?ref_type=heads
+      license:  any combination of GPL, LGPL, MPL or BSD licenses
+
+ *******************************************************************/
+
+
 #include "snake.h"
 
 
@@ -7,9 +19,15 @@ void create_snake_section(snake* player_snake){
         if (!player_snake->sections){
           exit(-1);
         }
+
+        //saves information about previously last section.
         section lastSection = player_snake->sections[player_snake->sections_number - 2];
         Directions lastSectionDirection = player_snake->directions[player_snake->sections_number - 2];
+        
+        
         player_snake->directions[player_snake->sections_number - 1] = lastSectionDirection;
+        
+        // Sets coordinates of the added section
         switch(lastSectionDirection){
           case UP:
             player_snake->sections[player_snake->sections_number - 1].current_x = lastSection.current_x;

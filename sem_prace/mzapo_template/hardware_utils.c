@@ -1,6 +1,18 @@
+/*******************************************************************
+  Program provides utils for controlling hardware to the game "Snakes" for the MZ_APO board
+
+
+  (C) Copyright 2025 by Abdzhanov Aidar
+      e-mail:   abdzhaid@cvut.cz
+      github: https://gitlab.fel.cvut.cz/B242_B0B35APO/abdzhaid/-/tree/main/sem_prace?ref_type=heads
+      license:  any combination of GPL, LGPL, MPL or BSD licenses
+
+ *******************************************************************/
+
+
 #include "hardware_utils.h"
 
-volatile uint32_t otoc;
+volatile uint32_t knob;
 unsigned char* mem_base;
 
 void init_hardware_utils(){
@@ -8,7 +20,7 @@ void init_hardware_utils(){
     if (mem_base == NULL)
         exit(1);
 
-    otoc = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o); 
+    knob = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o); 
 }
 
 void reset_hardware(){
@@ -17,21 +29,23 @@ void reset_hardware(){
   *(volatile uint32_t*)(mem_base + SPILED_REG_LED_RGB2_o) = 0;
 }
 
-int get_delta(int otoc_id){
+int get_delta(int knob_id){
   int delta = 0;
   
-  volatile uint32_t novy_otoc = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
+  volatile uint32_t new_knob = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
 
-  if (otoc_id == 0){
-    delta = (int) ((novy_otoc >> 16)&0xff) - (int)((otoc >> 16)&0xff);
+  // gets specified delta
+  if (knob_id == 0){
+    delta = (int) ((new_knob >> 16)&0xff) - (int)((knob >> 16)&0xff);
   }
-  else if (otoc_id == 1){
-    delta = (int) ((novy_otoc >> 8)&0xff) - (int)((otoc >> 8)&0xff);
+  else if (knob_id == 1){
+    delta = (int) ((new_knob >> 8)&0xff) - (int)((knob >> 8)&0xff);
   }
   else{
-    delta = (int) (novy_otoc &0xff) - (int)(otoc &0xff);
+    delta = (int) (new_knob &0xff) - (int)(knob &0xff);
   }
 
+  // solves oberflow problem
   if (delta > 128){
     delta -= 256;
   }
@@ -40,10 +54,9 @@ int get_delta(int otoc_id){
     delta += 256;
   }
 
+  // updates state of the knob.
   if (delta != 0)
-    otoc = novy_otoc;
-
-
+    knob = new_knob;
 
   return delta;
 }
@@ -84,19 +97,19 @@ void update_LED_line(snake* snake_to_update, bool left){
   }
 }
 
-bool button_pressed(int otoc_id){  
-  volatile uint32_t novy_otoc = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
+bool button_pressed(int knob_id){  
+  volatile uint32_t new_knob = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
 
   bool pressed = false;
 
-  if (otoc_id == 0){
-    pressed = (int) ((novy_otoc >> 26)&0x01) == 1;
+  if (knob_id == 0){
+    pressed = (int) ((new_knob >> 26)&0x01) == 1;
   }
-  else if (otoc_id == 1){
-    pressed = (int) ((novy_otoc >> 25)&0x01)  == 1;
+  else if (knob_id == 1){
+    pressed = (int) ((new_knob >> 25)&0x01)  == 1;
   }
   else{
-    pressed = (int) ((novy_otoc >> 24) &0x01) == 1;
+    pressed = (int) ((new_knob >> 24) &0x01) == 1;
   }
 
   return pressed;

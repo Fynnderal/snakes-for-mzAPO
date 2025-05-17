@@ -1,9 +1,21 @@
+/*******************************************************************
+  Program provides utils for controlling and updating the state of the game "Snakes" for the MZ_APO board
+
+
+  (C) Copyright 2025 by Abdzhanov Aidar
+      e-mail:   abdzhaid@cvut.cz
+      github: https://gitlab.fel.cvut.cz/B242_B0B35APO/abdzhaid/-/tree/main/sem_prace?ref_type=heads
+      license:  any combination of GPL, LGPL, MPL or BSD licenses
+
+ *******************************************************************/
+
 #include "game_utils.h"
 
 
 unsigned char speed = 3;
 int current_level = 0;
 int number_of_levels = 2;
+
 
 int check_game_over(snake* first_snake, snake* second_snake){
   if (first_snake->sections_number >= DEFALT_SNAKE_SIZE + 17 || second_snake->current_state == DEAD)
@@ -20,11 +32,7 @@ void draw_obstacles(obstacle* obstacles, int number_of_obstacles){
     return;
 
   for (int i = 0; i < number_of_obstacles; i++){
-    for (int y = 0; y < obstacles[i].height; y++){
-      for (int x = 0; x < obstacles[i].width; x++){
-        draw_pixel(obstacles[i].current_x + x, obstacles[i].current_y + y, 0xffef);
-      }
-    }
+    draw_object(obstacles[i].current_x, obstacles[i].current_y, obstacles[i].width, obstacles[i].height, 0xffef);
   }
 
 }
@@ -80,10 +88,12 @@ void draw_game_over_screen(char* text, int text_length, int current_option){
     }
   }
 
+  // draws text and buttons
   draw_text(150, 85, text, text_length, 0xffff);
   draw_text(160, 85 + fdes->height * FONT_SIZE + 10, "RESTART", 8, 0xffff);
   draw_text(160, 85 + fdes->height * FONT_SIZE * 2 + 20, "QUIT", 4, 0xffff);
 
+  // if the option selected, its color must be changed to grey.
   switch(current_option){
     case 0:
       draw_text(160, 85 + fdes->height * FONT_SIZE + 10, "RESTART", 8, 0xbdf7);
@@ -99,6 +109,7 @@ void draw_ingame_menu(int current_option){
   int bottom_y = 85 + fdes->height * FONT_SIZE * 2 + 20;
   int bottom_x = 160 + (char_width('C') + char_width('O') + 2 * char_width('N') + char_width('T') + char_width('I') + char_width('U') + 2 * char_width('E')) * FONT_SIZE;
 
+  // creates panel for the texts
   for (int j = 80; j < bottom_y; j++){
     for (int i = 150; i < bottom_x; i++){
       draw_pixel(i, j, 0xf800);
@@ -108,6 +119,7 @@ void draw_ingame_menu(int current_option){
   draw_text(160, 85, "CONTINUE", 8, 0xffff);
   draw_text(160, 85 + fdes->height * FONT_SIZE + 10, "QUIT", 4, 0xffff);
 
+    // if the option selected, its color must be changed to grey.
   switch(current_option){
     case 0:
       draw_text(160, 85, "CONTINUE", 8, 0xbdf7);
@@ -122,7 +134,8 @@ void draw_ingame_menu(int current_option){
 
 void draw_options_menu(int current_option){
       int textX = 160;
-      
+     
+      // changes speed with buttons
       if (current_option == 0) {
         draw_text(textX, 85, "SPEED", 6, 0xbdf7);
         int delta = get_delta(2);
@@ -140,7 +153,8 @@ void draw_options_menu(int current_option){
       if (current_option == 1){
         draw_text(160, 90 + fdes->height * FONT_SIZE, "LEVEL", 5, 0xbdf7);
         int delta = get_delta(2);
-
+        
+          // changes level with buttons
         if (delta > 1)
           current_level = (current_level + 1) % number_of_levels;
         else if (delta < -1)
@@ -158,6 +172,7 @@ void draw_main_menu(int current_option){
   draw_text(160, 85, "START", 5, 0xffff);
   draw_text(160, 85 + fdes->height * FONT_SIZE + 10, "OPTIONS", 7, 0xffff);
   draw_text(160, 85 + 20 + fdes->height * 2 * FONT_SIZE, "EXIT", 4, 0xffff);
+      // if the option selected, its color must be changed to grey.
   switch(current_option){
     case 0:
       draw_text(160, 85, "START", 5, 0xbdf7);
@@ -204,9 +219,11 @@ bool checkConrools(int controlID, snake* player_snake, long long now, long long 
 
 
 
-section* create_apple(snake* snake1, snake* snake2, section* apple){
+section* create_apple(snake* snake1, snake* snake2, obstacle* obstacles, int number_of_the_obstacles, section* apple){
   int randomX = rand() % 460 + 10;
   int randomY = rand() % 300 + 10;
+
+  // if apple was created on the snake, it must be deleted.
   for (int i = 0; i < snake1->sections_number; i++){
     if (randomX + AppleSize >= snake1->sections[i].current_x &&
         randomX <= snake1->sections[i].current_x + snake1->section_size &&
@@ -217,11 +234,23 @@ section* create_apple(snake* snake1, snake* snake2, section* apple){
         }
   }
   
+    // if apple was created on the snake, it must be deleted.
   for (int i = 0; i < snake2->sections_number; i++){
     if (randomX + AppleSize >= snake2->sections[i].current_x &&
         randomX <= snake2->sections[i].current_x + snake2->section_size &&
         randomY + AppleSize >= snake2 -> sections[i].current_y &&
         randomY <= snake2 ->sections[i].current_y + snake2->section_size
+        ){
+          return NULL;
+        }
+  }
+
+      // if apple was created on the obstacle, it must be deleted.
+  for (int i = 0; i < number_of_the_obstacles; i++){
+    if (randomX + AppleSize >= obstacles[i].current_x &&
+        randomX <= obstacles[i].current_x + obstacles[i].width &&
+        randomY + AppleSize >=  obstacles[i].current_y &&
+        randomY <= obstacles[i].current_y + obstacles[i].height
         ){
           return NULL;
         }
@@ -235,8 +264,8 @@ section* create_apple(snake* snake1, snake* snake2, section* apple){
   return apple;
 }
 
-section* spawn_apple(snake* snake1, snake* snake2, section* apple){
-  apple = create_apple(snake1, snake2, apple);
+section* spawn_apple(snake* snake1, snake* snake2, obstacle* obstacles, int number_of_the_obstacles, section* apple){
+  apple = create_apple(snake1, snake2, obstacles, number_of_the_obstacles, apple);
   if (apple == NULL)
     return NULL;
 
