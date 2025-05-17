@@ -1,5 +1,12 @@
 {
     "files.associations": {
-        "mzapo_phys.h": "c"
+        "mzapo_phys.h": "c",
+        "limits": "c",
+        "time.h": "c",
+        "game_utils.h": "c",
+        "mzapo_parlcd.h": "c",
+        "display_utils.h": "c",
+        "stdlib.h": "c",
+        "stdbool.h": "c"
     }
 }
