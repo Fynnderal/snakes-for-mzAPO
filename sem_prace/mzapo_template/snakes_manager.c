@@ -27,18 +27,12 @@
 #include "game_utils.h"
 #include "hardware_utils.h"
 #include "display_utils.h"
+#include "gui_utils.h"
 
 
 unsigned char *parlcd_mem_base;
 
-bool start = false;
-bool in_main_menu = true;
-bool in_options = false;
-bool in_game_menu = false;
-bool in_game_over_screen = false;
 
-signed char current_option = 0;
-int game_over;
 
 snake red_snake = {0};
 snake blue_snake = {0};
@@ -56,134 +50,7 @@ bool isBlueInvincible = false;
 
 section* currentApple = NULL;
 
-/**
- * Updates state of the main menu.
- * It checks what option in the main menu player chose and draws respective menu.
- */
-void update_main_menu(){
-  clean_screen(); 
-  draw_main_menu(current_option);
-  draw_screen(parlcd_mem_base);
 
-  int delta = get_delta(1);
-
-  if (delta > 1)
-    current_option = (current_option + 1) % 3;
-  if (delta < -1){
-    current_option = (current_option + 2) % 3;
-  }
-
-  if (button_pressed(1)){
-    switch(current_option){
-      case 0:
-        // starts game
-        in_main_menu = false;
-        start = true;
-        init_game(parlcd_mem_base, &red_snake, &blue_snake, &obstacles, &number_of_obstacles, current_level);
-        break;
-
-      case 1:
-        // opens menu with options
-        in_main_menu = false;
-        in_options = true;
-        current_option = 0;
-        break;
-
-      case 2:
-        // exits from the game
-        clean_screen();
-        draw_screen(parlcd_mem_base);
-        exit(0);
-        break;
-    }
-    sleep(1);
-  }
-}
-
-/**
- * Updates state of the option menu.
- */
-void update_options_menu(){
-  int delta = get_delta(1);
-  
-  if (delta != 0)
-    current_option = (current_option + 1) % 2;
-
-  clean_screen();
-  draw_options_menu(current_option);
-  draw_screen(parlcd_mem_base);
-
-
-  if (button_pressed(1)) {
-    // returns to the main menu
-    in_options = false;
-    in_main_menu = true;
-    current_option = 0;
-    sleep(1);
-  }
-}
-
-/**
- * Updates state of the in-game menu. This menu freezes game
- */
-void update_ingame_menu(){
-  int delta = get_delta(1);
-  if (delta != 0)
-    current_option = (current_option + 1) % 2;
-
-  draw_ingame_menu(current_option);
-  draw_screen(parlcd_mem_base);
-
-  if (button_pressed(1)) {
-    if (current_option == 0){
-      // continues game
-      in_game_menu = false;
-      current_option = 0;
-      start = true;
-    }else if (current_option == 1){
-      // exits to the main menu
-      in_game_menu = false;
-      in_main_menu = true;
-      current_option = 0;
-      reset_hardware();
-    }
-    sleep(1);
-  }
-}
-
-/**
- * Updates the state of the game-over screen
- */
-void update_game_over_screen(){
-  int delta = get_delta(1);
-  if (delta != 0)
-    current_option = (current_option + 1) % 2;
-  
-  // checks what player has won
-  if (game_over == 0)
-    draw_game_over_screen("RED WON!", 8, current_option);
-  else
-    draw_game_over_screen("BLUE WON!", 9, current_option);
-  
-  draw_screen(parlcd_mem_base);
-
-  if (button_pressed(1)){
-    if (current_option == 0){
-        // restarts game
-        in_game_over_screen = false;
-        start = true;
-        init_game(parlcd_mem_base, &red_snake, &blue_snake, &obstacles, &number_of_obstacles, current_level);
-        sleep(1);
-    }
-    else {
-      // returns to the main menu
-      in_game_over_screen = false;
-      in_main_menu = true;
-      reset_hardware();
-      sleep(1);
-    }
-  }
-}
 
 /**
  * Draws the current state of the game.
@@ -259,8 +126,8 @@ int main(int argc, char *argv[]) {
 
   long long timeBetweenUpdates;
 
-  long long previousRedCheckControls = 0;
-  long long previousBlueCheckControls = 0;
+  long long previous_red_check_controls = 0;
+  long long previous_blue_check_controls = 0;
 
   long long invincibleInterval = 5000 / speed;
   long long intervalBetweenChecks = 400 / speed;
@@ -277,15 +144,15 @@ int main(int argc, char *argv[]) {
 
 
     if (in_main_menu) {
-      update_main_menu();
+      update_main_menu(parlcd_mem_base, &red_snake, &blue_snake, &obstacles, &number_of_obstacles, current_level);
     }
 
     if (in_options){
-      update_options_menu();
+      update_options_menu(parlcd_mem_base);
     }
 
     if (in_game_menu){
-      update_ingame_menu();
+      update_ingame_menu(parlcd_mem_base);
     }
 
     if (start){
@@ -301,11 +168,11 @@ int main(int argc, char *argv[]) {
         isBlueInvincible = false;
       }
 
-      if (checkConrools(0, &red_snake, now, previousRedCheckControls, intervalBetweenChecks)) 
-        previousRedCheckControls = now;
+      if (check_controls(0, &red_snake, now, previous_red_check_controls, intervalBetweenChecks)) 
+        previous_red_check_controls = now;
 
-      if (checkConrools(2, &blue_snake, now, previousBlueCheckControls, intervalBetweenChecks))
-        previousBlueCheckControls = now;
+      if (check_controls(2, &blue_snake, now, previous_blue_check_controls, intervalBetweenChecks))
+        previous_blue_check_controls = now;
 
 
       // updates screen with required speed
@@ -330,7 +197,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (in_game_over_screen){
-      update_game_over_screen();
+      update_game_over_screen(parlcd_mem_base, &red_snake, &blue_snake, &obstacles, &number_of_obstacles, current_level);
     }
     
   }

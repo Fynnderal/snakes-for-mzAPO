@@ -164,3 +164,31 @@ bool check_collisions(snake* snake_to_check, snake* snake_on_the_map, obstacle* 
   return false;
 }
 
+bool check_controls(int controlID, snake* player_snake, long long now, long long previous_update, long long intervalBetweenChecks){
+
+  int delta = get_delta(controlID);
+
+  if (now - previous_update >= intervalBetweenChecks){
+      if (delta == 0)
+          return false;
+
+      if (delta > 0){
+        if (player_snake->directions[0] == LEFT)
+          player_snake->directions[0] = DOWN;
+        else
+          player_snake->directions[0]++;
+      }
+      if (delta < 0)
+      {
+        if (player_snake->directions[0] == DOWN)
+          player_snake->directions[0] = LEFT;
+        else
+          player_snake->directions[0]--;
+      }
+    
+    return true;
+  }
+
+  return false;
+}
+

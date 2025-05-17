@@ -44,47 +44,6 @@ void draw_obstacles(obstacle* obstacles, int number_of_obstacles);
 void init_game(unsigned char* parlcd_mem_base, snake* first_snake, snake* second_snake, obstacle** obstacles, int* number_of_obstacles, int current_level);
 
 /**
- * Draws game-over screen.
- * 
- * @param text - text to write on the screen.
- * @param text_length - length of the text.
- * @param current_optioin - currently selected option in the menu.
- */
-void draw_game_over_screen(char* text, int text_length, int current_option);
-
-/**
- * Draws ingame menu.
- * 
- * @param current_optioin - currently selected option in the menu.
- */
-void draw_ingame_menu(int current_option);
-
-/**
- * Draws options menu.
- * 
- * @param current_optioin - currently selected option in the menu.
- */
-void draw_options_menu(int current_option);
-
-/**
- * Draws main menu.
- * 
- * @param current_optioin - currently selected option in the menu.
- */
-void draw_main_menu(int current_option);
-
-/**
- * Checks controls and updates direction of the snake.
- * 
- * @param controlID - id of the controller for this snake. (0 for red, 1 for green, 2 for blue)
- * @param player_snale - the snake for which direction must be updated.
- * @param now - current time.
- * @param previous_update - time of the previous update.
- * @param interval_between_checks - time between updates
- */
-bool checkConrools(int controlID, snake* player_snake, long long now, long long previous_update, long long interval_between_checks);
-
-/**
  * Creates apple object
  * 
  * @param snake1 - snake of the first player.

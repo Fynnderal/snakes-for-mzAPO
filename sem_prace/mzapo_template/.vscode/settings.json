@@ -7,6 +7,7 @@
         "mzapo_parlcd.h": "c",
         "display_utils.h": "c",
         "stdlib.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "gui_utils.h": "c"
     }
 }

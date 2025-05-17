@@ -63,6 +63,16 @@ void move_snake(snake* player_snake);
  */
 bool check_collisions(snake* snake_to_check, snake* snake_on_the_map, obstacle* obstacles, int number_of_obstacles);
 
+/**
+ * Checks controls and updates direction of the snake.
+ * 
+ * @param controlID - id of the controller for this snake. (0 for red, 1 for green, 2 for blue)
+ * @param player_snale - the snake for which direction must be updated.
+ * @param now - current time.
+ * @param previous_update - time of the previous update.
+ * @param interval_between_checks - time between updates
+ */
+bool check_controls(int controlID, snake* player_snake, long long now, long long previous_update, long long interval_between_checks);
 
 
 #endif
