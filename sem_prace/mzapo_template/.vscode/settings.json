@@ -8,6 +8,7 @@
         "display_utils.h": "c",
         "stdlib.h": "c",
         "stdbool.h": "c",
-        "gui_utils.h": "c"
+        "gui_utils.h": "c",
+        "gameobjects.h": "c"
     }
 }

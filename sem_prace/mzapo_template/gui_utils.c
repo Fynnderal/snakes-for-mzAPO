@@ -27,10 +27,16 @@ void update_main_menu(unsigned char* parlcd_mem_base, snake* red_snake, snake* b
 
   int delta = get_delta(1);
 
-  if (delta > 1)
+  if (delta > 0)
     current_option = (current_option + 1) % 3;
-  if (delta < -1){
+    
+  if (delta < 0)
     current_option = (current_option + 2) % 3;
+  
+  if (delta != 0){
+    // solves slippage
+    usleep(150000);
+    get_delta(1);
   }
 
   if (button_pressed(1)){
@@ -63,8 +69,14 @@ void update_main_menu(unsigned char* parlcd_mem_base, snake* red_snake, snake* b
 void update_options_menu(unsigned char* parlcd_mem_base){
   int delta = get_delta(1);
   
-  if (delta != 0)
+  if (delta != 0){
     current_option = (current_option + 1) % 2;
+    // solves slippage
+    usleep(150000);
+    get_delta(1);
+  }
+
+
 
   clean_screen();
   draw_options_menu(current_option);
@@ -81,9 +93,15 @@ void update_options_menu(unsigned char* parlcd_mem_base){
 }
 
 void update_ingame_menu(unsigned char* parlcd_mem_base){
+  
   int delta = get_delta(1);
-  if (delta != 0)
+  if (delta != 0){
     current_option = (current_option + 1) % 2;
+    // solves slippage
+    usleep(150000);
+    get_delta(1);
+  }
+
 
   draw_ingame_menu(current_option);
   draw_screen(parlcd_mem_base);
@@ -106,9 +124,14 @@ void update_ingame_menu(unsigned char* parlcd_mem_base){
 }
 
 void update_game_over_screen(unsigned char* parlcd_mem_base, snake* red_snake, snake* blue_snake, obstacle** obstacles, int* number_of_obstacles, int current_level){
+  
   int delta = get_delta(1);
-  if (delta != 0)
+  if (delta != 0){
     current_option = (current_option + 1) % 2;
+    // solves slippage
+    usleep(150000);
+    get_delta(1);
+  }
   
   // checks what player has won
   if (game_over == 0)
@@ -123,7 +146,7 @@ void update_game_over_screen(unsigned char* parlcd_mem_base, snake* red_snake, s
         // restarts game
         in_game_over_screen = false;
         start = true;
-        init_game(parlcd_mem_base, &red_snake, &blue_snake, obstacles, number_of_obstacles, current_level);
+        init_game(parlcd_mem_base, red_snake, blue_snake, obstacles, number_of_obstacles, current_level);
         sleep(1);
     }
     else {
