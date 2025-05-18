@@ -18,27 +18,35 @@ enum {
 } typedef States;
 
 
+/** 
+ * @brief Represents one section of the snake 
+ */
 struct {
-  int current_x;
-  int current_y;
+  int current_x;  /**<x coordinate in pixels*/
+  int current_y;  /**<y coordinate in pixels*/
 } typedef section;
 
+/** 
+ * @brief Represents snake
+ */
 struct {
-    int current_x;
-    int current_y;
-    int section_size;
-    int sections_number;
-    States current_state;
-    section* sections;
-    Directions* directions;
+    int current_x; /**< x coordinate in pixels*/
+    int current_y; /**< y coordinate in pixels*/
+    int section_size; /**< size of one section in pixels*/
+    int sections_number; /**< number of sections*/
+    States current_state; /**< current state of the snake*/
+    section* sections; /**< array of the sections of the snake*/
+    Directions* directions;  /**<array of directions where each section has its own direction */
 } typedef snake;
 
-
+/**
+ * @brief Represents obstacle
+ */
 struct {
-  int current_x;
-  int current_y;
-  int width;
-  int height;
+  int current_x; /**< x coordinate in pixels*/
+  int current_y; /**< y coordinate in pixels*/
+  int width;    /**< width of the obstacle in pixels*/
+  int height;   /**< height of the obstacle in pixels*/
 
 } typedef obstacle;
 

@@ -12,7 +12,9 @@
 #include "mzapo_regs.h"
 #include <stdbool.h>
 
+/**Keeps previous information from the knov */
 extern volatile uint32_t knob;
+/**Address to serial port */
 extern unsigned char* mem_base;
 
 /**

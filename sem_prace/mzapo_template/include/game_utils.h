@@ -9,8 +9,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+/** current speed of the snakes */
 extern unsigned char speed;
+/**current level to load */
 extern int current_level;
+/**general number of levels in game */
 extern int number_of_levels;
 
 /**

@@ -7,13 +7,19 @@
 
 #include <stdbool.h>
 
+/**Determines whther the game is started or not */
 extern bool start;
+/**Determines whther the player in the main menu or not */
 extern bool in_main_menu;
+/**Determines whther the player in the options menu or not */
 extern bool in_options;
+/**Determines whther the player in the in-game menu or not */
 extern bool in_game_menu;
+/**Determines whther the player in the game over screen or not */
 extern bool in_game_over_screen;
+/**Keeps information about the winner*/
 extern int game_over;
-
+/** Currently selected option in the menu */
 extern signed char current_option;
 
 /**

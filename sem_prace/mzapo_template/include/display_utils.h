@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include "mzapo_parlcd.h"
 
-
+/**frame buffer */
 extern unsigned short* fb;
+
+/**font descriptor */
 extern font_descriptor_t* fdes;
 
 /**
